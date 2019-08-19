@@ -98,6 +98,7 @@ export default {
         { type: 'actionButton', dataElement: 'customButton1', label: 'Button 1', onClick: () => console.log(1) },
         { type: 'actionButton', dataElement: 'customButton2', label: 'Button 2', onClick: () => console.log(2) },
         { type: 'actionButton', dataElement: 'customButton3', label: 'Button 3', onClick: () => console.log(3) },
+        { type: 'spacer' },
         {
           type: 'actionButton',
           dataElement: 'defaultHeaderButton',
