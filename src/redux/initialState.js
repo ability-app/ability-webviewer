@@ -56,6 +56,17 @@ export default {
           title: 'component.toolsButton',
           hidden: ['desktop'],
         },
+        {
+          type: 'actionButton',
+          label: 'Switch Header',
+          onClick: dispatch => {
+            dispatch(actions.setActiveHeaderGroup('custom'));
+            core.setToolMode(defaultTool);
+            dispatch(actions.closeElements(['viewControlsOverlay', 'searchOverlay', 'menuOverlay', 'searchPanel', 'leftPanel', 'zoomOverlay', 'redactionOverlay']));
+          },
+          dataElement: 'customHeaderButton',
+          hidden: ['tablet', 'mobile'],
+        },
         { type: 'divider', hidden: ['tablet', 'mobile'] },
         { type: 'toggleElementButton', dataElement: 'searchButton', element: 'searchOverlay', img: 'ic_search_black_24px', title: 'component.searchOverlay' },
         { type: 'toggleElementButton', dataElement: 'menuButton', element: 'menuOverlay', img: 'ic_overflow_black_24px', title: 'component.menuOverlay' },
@@ -71,6 +82,22 @@ export default {
         { type: 'toolButton', toolName: 'AnnotationCreateSticky' },
         { type: 'toolGroupButton', toolGroup: 'miscTools', img: 'ic_more_black_24px', dataElement: 'miscToolGroupButton', title: 'component.miscToolsButton' },
         { type: 'spacer' },
+        {
+          type: 'actionButton',
+          dataElement: 'defaultHeaderButton',
+          titile: 'action.close',
+          img: 'ic_close_black_24px',
+          onClick: dispatch => {
+            dispatch(actions.setActiveHeaderGroup('default'));
+            core.setToolMode(defaultTool);
+            dispatch(actions.closeElements(['viewControlsOverlay', 'searchOverlay', 'menuOverlay', 'searchPanel', 'leftPanel', 'redactionOverlay']));
+          },
+        },
+      ],
+      custom: [
+        { type: 'actionButton', dataElement: 'customButton1', label: 'Button 1', onClick: () => console.log(1) },
+        { type: 'actionButton', dataElement: 'customButton2', label: 'Button 2', onClick: () => console.log(2) },
+        { type: 'actionButton', dataElement: 'customButton3', label: 'Button 3', onClick: () => console.log(3) },
         {
           type: 'actionButton',
           dataElement: 'defaultHeaderButton',
