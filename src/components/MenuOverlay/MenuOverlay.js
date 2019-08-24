@@ -1,14 +1,14 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { withTranslation } from 'react-i18next';
+import React, { useRef, useState, useEffect } from 'react';
+import classNames from 'classnames';
+import { useSelector, useDispatch, shallowEqual } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import onClickOutside from 'react-onclickoutside';
 
 import ActionButton from 'components/ActionButton';
+import ToolButton from 'components/ToolButton';
 
 import getOverlayPositionBasedOn from 'helpers/getOverlayPositionBasedOn';
 import print from 'helpers/print';
-import getClassName from 'helpers/getClassName';
 import openFilePicker from 'helpers/openFilePicker';
 import toggleFullscreen from 'helpers/toggleFullscreen';
 import downloadPdf from 'helpers/downloadPdf';
@@ -19,97 +19,129 @@ import selectors from 'selectors';
 
 import './MenuOverlay.scss';
 
-class MenuOverlay extends React.PureComponent {
-  static propTypes = {
-    documentPath: PropTypes.string,
-    documentFilename: PropTypes.string,
-    isDownloadable: PropTypes.bool,
-    isEmbedPrintSupported: PropTypes.bool,
-    isFullScreen: PropTypes.bool,
-    isDisabled: PropTypes.bool,
-    isOpen: PropTypes.bool,
-    closeElements: PropTypes.func.isRequired,
-    dispatch: PropTypes.func.isRequired,
-    t: PropTypes.func.isRequired,
-  }
+const MenuOverlay = () => {
+  const [
+    buttons,
+    documentPath,
+    documentFilename,
+    isDownloadable,
+    isEmbedPrintSupported,
+    isFullScreen,
+    isDisabled,
+    isOpen,
+  ] = useSelector(
+    state => [
+      state.viewer.menuOverlay,
+      selectors.getDocumentPath(state),
+      state.document.filename,
+      selectors.getDocumentType(state) !== workerTypes.XOD,
+      selectors.isEmbedPrintSupported(state),
+      selectors.isFullScreen(state),
+      selectors.isElementDisabled(state, 'menuOverlay'),
+      selectors.isElementOpen(state, 'menuOverlay'),
+    ],
+    shallowEqual,
+  );
+  const dispatch = useDispatch();
+  const [t] = useTranslation();
+  const overlayRef = useRef();
+  const [position, setPosition] = useState({ left: 0, right: 'auto' });
 
-  constructor() {
-    super();
-    this.overlay = React.createRef();
-    this.state = {
-      left: 0,
-      right: 'auto',
-    };
-  }
+  const dataElementButtonMap = {
+    filePickerButton: (
+      <ActionButton
+        dataElement="filePickerButton"
+        label={t('action.openFile')}
+        onClick={openFilePicker}
+      />
+    ),
+    fullScreenButton: !isIOS && (
+      <ActionButton
+        dataElement="fullScreenButton"
+        label={
+          isFullScreen
+            ? t('action.exitFullscreen')
+            : t('action.enterFullscreen')
+        }
+        onClick={toggleFullscreen}
+      />
+    ),
+    downloadButton: isDownloadable && (
+      <ActionButton
+        dataElement="downloadButton"
+        label={t('action.download')}
+        onClick={() =>
+          downloadPdf(dispatch, {
+            documentPath,
+            filename: documentFilename,
+          })
+        }
+      />
+    ),
+    printButton: (
+      <ActionButton
+        dataElement="printButton"
+        label={t('action.print')}
+        onClick={() => print(dispatch, isEmbedPrintSupported)}
+        hidden={['mobile']}
+      />
+    ),
+  };
 
-  componentDidUpdate(prevProps) {
-    if (!prevProps.isOpen && this.props.isOpen) {
-      this.props.closeElements(['groupOverlay', 'viewControlsOverlay', 'searchOverlay', 'toolStylePopup', 'signatureOverlay', 'zoomOverlay', 'redactionOverlay']);
-      this.setState(getOverlayPositionBasedOn('menuButton', this.overlay));
-    }
-  }
+  useEffect(() => {
+    dispatch(
+      actions.closeElements([
+        'groupOverlay',
+        'viewControlsOverlay',
+        'searchOverlay',
+        'toolStylePopup',
+        'signatureOverlay',
+        'zoomOverlay',
+        'redactionOverlay',
+      ]),
+    );
 
-  handlePrintButtonClick = () => {
-    const { dispatch, isEmbedPrintSupported } = this.props;
+    setPosition(getOverlayPositionBasedOn('menuButton', overlayRef));
+  }, [dispatch, isOpen]);
 
-    print(dispatch, isEmbedPrintSupported);
-  }
-
-  handleClickOutside = e => {
-    const clickedMenuButton = e.target.getAttribute('data-element') === 'menuButton';
+  MenuOverlay.handleClickOutside = e => {
+    const clickedMenuButton =
+      e.target.getAttribute('data-element') === 'menuButton';
 
     if (!clickedMenuButton) {
-      this.props.closeElements(['menuOverlay']);
+      dispatch(actions.closeElements(['menuOverlay']));
     }
-  }
+  };
 
-  downloadDocument = () => {
-    const { dispatch, documentPath, documentFilename } = this.props;
-
-    downloadPdf(dispatch, {
-      documentPath,
-      filename: documentFilename,
-    });
-  }
-
-  render() {
-    const { left, right } = this.state;
-    const { isDisabled, isDownloadable, isFullScreen, t } = this.props;
-
-    if (isDisabled) {
-      return null;
-    }
-
-    const className = getClassName('Overlay MenuOverlay', this.props);
-
-    return (
-      <div className={className} data-element="menuOverlay" style={{ left, right }} ref={this.overlay}>
-        <ActionButton dataElement="filePickerButton" label={t('action.openFile')} onClick={openFilePicker} />
-        {!isIOS &&
-          <ActionButton dataElement="fullScreenButton" label={isFullScreen ? t('action.exitFullscreen') : t('action.enterFullscreen')} onClick={toggleFullscreen} />
+  return isDisabled ? null : (
+    <div
+      className={classNames({
+        Overlay: true,
+        MenuOverlay: true,
+        open: isOpen,
+        closed: !isOpen,
+      })}
+      data-element="menuOverlay"
+      style={{ ...position }}
+      ref={overlayRef}
+    >
+      {buttons.map(dataElement => {
+        if (dataElementButtonMap[dataElement] !== undefined) {
+          return (
+            <React.Fragment key={dataElement}>
+              {dataElementButtonMap[dataElement]}
+            </React.Fragment>
+          );
         }
-        {isDownloadable &&
-          <ActionButton dataElement="downloadButton" label={t('action.download')} onClick={this.downloadDocument} />
-        }
-        <ActionButton dataElement="printButton" label={t('action.print')} onClick={this.handlePrintButtonClick} hidden={['mobile']} />
-      </div>
-    );
-  }
-}
 
-const mapStateToProps = state => ({
-  documentPath: selectors.getDocumentPath(state),
-  documentFilename: state.document.filename,
-  isDownloadable: selectors.getDocumentType(state) !== workerTypes.XOD,
-  isEmbedPrintSupported: selectors.isEmbedPrintSupported(state),
-  isFullScreen: selectors.isFullScreen(state),
-  isDisabled: selectors.isElementDisabled(state, 'menuOverlay'),
-  isOpen: selectors.isElementOpen(state, 'menuOverlay'),
-});
+        return <ToolButton key={dataElement} {...dataElement} />;
+      })}
+    </div>
+  );
+};
 
-const mapDispatchToProps = dispatch => ({
-  dispatch,
-  closeElements: dataElements => dispatch(actions.closeElements(dataElements)),
-});
+const clickOutsideConfig = {
+  handleClickOutside: () => MenuOverlay.handleClickOutside,
+};
 
-export default connect(mapStateToProps, mapDispatchToProps)(withTranslation()(onClickOutside(MenuOverlay)));
+export default onClickOutside(MenuOverlay, clickOutsideConfig);

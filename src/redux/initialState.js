@@ -149,6 +149,15 @@ export default {
       MarqueeZoomTool: { dataElement: 'marqueeToolButton', title: 'tool.select', label: 'Marquee Zoom', showColor: 'never', iconColor: null, currentPalette: null, availablePalettes: [], annotationCheck: null },
       AnnotationEraserTool: { iconColor: null, currentPalette: null, availablePalettes: [], annotationCheck: null, dataElement: 'eraserToolButton', title: 'annotation.eraser', img: 'ic_annotation_eraser_black_24px', showColor: 'never' },
     },
+    menuOverlay: [
+      'filePickerButton',
+      'fullScreenButton',
+      'downloadButton',
+      'printButton',
+      {
+        type: 'toolButton', img: 'ic_select_black_24px', toolName: 'AnnotationEdit', dataElement: 'selectToolButton', title: 'tool.select', hidden: ['tablet', 'mobile'],
+      },
+    ],
     activeHeaderGroup: 'default',
     activeToolName: 'AnnotationEdit',
     activeToolStyles: {},
