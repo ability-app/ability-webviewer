@@ -23,10 +23,6 @@ const propTypes = {
   onClick: PropTypes.func.isRequired,
 };
 
-const defaultProps = {
-  onClick: () => {},
-};
-
 const Button = ({
   disable,
   isActive,
@@ -35,7 +31,7 @@ const Button = ({
   label,
   color,
   dataElement,
-  onClick,
+  onClick = () => {},
   className,
   title,
 }) => {
@@ -81,7 +77,5 @@ const Button = ({
 };
 
 Button.propTypes = propTypes;
-
-Button.defaultProps = defaultProps;
 
 export default React.memo(Button);
